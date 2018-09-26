@@ -174,35 +174,6 @@ namespace GMWebExtension
             };
             Browser browserObj = new Browser(browser);
             browsers.Add(browserObj);
-            
-            browser.Paint += (sender, e) =>
-            {
-                if (e.IsPopup)
-                    return;
-                
-                //Debug.WriteLine("Paint " + e.DirtyRect.X + ";" + e.DirtyRect.Y + ";" + e.DirtyRect.Width + ";" + e.DirtyRect.Height);
-
-                lock (device)
-                {
-                    if (browserObj.texture == null || browserObj.textureSize.Width != browserObj.browser.Size.Width || browserObj.textureSize.Height != browserObj.browser.Size.Height)
-                    {
-                        Debug.WriteLine("Recreate texture " + browserObj.browser.Size.Width + "x" + browserObj.browser.Size.Height);
-                        browserObj.textureSize = new Size(browserObj.browser.Size.Width, browserObj.browser.Size.Height);
-                        if (browserObj.texture != null)
-                            browserObj.texture.Dispose();
-                        browserObj.texture = new Texture(device, browserObj.textureSize.Width, browserObj.textureSize.Height, 1, Usage.Dynamic, Format.A8R8G8B8, Pool.Default);
-                    }
-                    var rect = browserObj.texture.LockRectangle(0, LockFlags.None);
-                    unsafe
-                    {
-                        for (int y = 0; y < e.Height; y++)
-                        {
-                            Buffer.MemoryCopy((byte*)e.BufferHandle.ToPointer() + y * e.Width * 4, (byte*)rect.DataPointer.ToPointer() + y * rect.Pitch, (uint)(e.Width * 4), (uint)(e.Width * 4));
-                        }
-                    }
-                    browserObj.texture.UnlockRectangle(0);
-                }
-            };
 
             return browserId;
         }
@@ -247,20 +218,50 @@ namespace GMWebExtension
 
             //Debug.WriteLine("Draw");
 
-            if (browsers[browserId].texture == null)
+            Browser browserObj = browsers[browserId];
+
+            if (browserObj.texture == null || browserObj.textureSize.Width != browserObj.browser.Size.Width || browserObj.textureSize.Height != browserObj.browser.Size.Height)
             {
-                Debug.WriteLine("No texture yet!");
-                return 0;
+                Debug.WriteLine("Recreate texture " + browserObj.browser.Size.Width + "x" + browserObj.browser.Size.Height);
+                browserObj.textureSize = new Size(browserObj.browser.Size.Width, browserObj.browser.Size.Height);
+                if (browserObj.texture != null)
+                    browserObj.texture.Dispose();
+                browserObj.texture = new Texture(device, browserObj.textureSize.Width, browserObj.textureSize.Height, 1, Usage.Dynamic, Format.A8R8G8B8, Pool.Default);
             }
 
-            lock(device)
+
+            BitmapBuffer buffer = (browserObj.browser.RenderHandler as DefaultRenderHandler).BitmapBuffer;
+            lock (buffer.BitmapLock)
             {
-                if (browsers[browserId].sprite == null)
-                    browsers[browserId].sprite = new Sprite(device);
-                browsers[browserId].sprite.Begin();
-                browsers[browserId].sprite.Draw(browsers[browserId].texture, new RawColorBGRA(255, 255, 255, 255), null, null, new RawVector3((float)x, (float)y, 0.0f));
-                browsers[browserId].sprite.End();
+                if (buffer.Width == 0 || buffer.Height == 0 || buffer.Buffer.Length == 0)
+                {
+                    Debug.WriteLine("No buffer!!!");
+                    return 0;
+                }
+                if (browserObj.textureSize.Width != buffer.Width || browserObj.textureSize.Height != buffer.Height)
+                {
+                    Debug.WriteLine("Invalid buffer size!!!");
+                    return 0;
+                }
+                var rect = browserObj.texture.LockRectangle(0, LockFlags.None);
+                unsafe
+                {
+                    fixed (byte* buf = buffer.Buffer)
+                    {
+                        for (int yy = 0; yy < buffer.Height; yy++)
+                        {
+                            Buffer.MemoryCopy(buf + yy * buffer.Width * 4, (byte*)rect.DataPointer.ToPointer() + yy * rect.Pitch, (uint)(buffer.Width * 4), (uint)(buffer.Width * 4));
+                        }
+                    }
+                }
+                browserObj.texture.UnlockRectangle(0);
             }
+
+            if (browsers[browserId].sprite == null)
+                browsers[browserId].sprite = new Sprite(device);
+            browsers[browserId].sprite.Begin();
+            browsers[browserId].sprite.Draw(browsers[browserId].texture, new RawColorBGRA(255, 255, 255, 255), null, null, new RawVector3((float)x, (float)y, 0.0f));
+            browsers[browserId].sprite.End();
 
             return 1;
         }

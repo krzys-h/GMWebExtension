@@ -20,9 +20,8 @@ var event_id = async_load[? "id"];
 
 if (event_id == browser_event) {
     var type = async_load[? "type"];
-    var browser = async_load[? "browser"];
+    var browser_id = async_load[? "browser"];
     if (type == "browser_initialized") {
-        var browser = async_load[? "browser"];
         show_message("Browser initialized");
     }
     if (type == "frame_load_end") {
