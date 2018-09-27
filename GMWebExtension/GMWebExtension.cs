@@ -109,9 +109,11 @@ namespace GMWebExtension
         public static double __webextension_native_init()
         {
             var settings = new CefSettings();
-            settings.SetOffScreenRenderingBestPerformanceArgs();
+            //settings.SetOffScreenRenderingBestPerformanceArgs();
             settings.CefCommandLineArgs.Add("autoplay-policy", "no-user-gesture-required");
             settings.CefCommandLineArgs.Remove("mute-audio");
+            foreach (var a in settings.CefCommandLineArgs)
+                Debug.WriteLine(a.Key + "=" + a.Value);
             Cef.Initialize(settings, performDependencyCheck: true, browserProcessHandler: null);
             return 1;
         }
@@ -279,6 +281,28 @@ namespace GMWebExtension
             }
 
             return 1;
+        }
+
+        [DllExport(CallingConvention.Cdecl)]
+        public static double browser_js(double browserIdDouble, string js)
+        {
+            int browserId = (int)browserIdDouble; // this is so stupid, GML...
+            if (browserId < 0 || browserId >= browsers.Count || browsers[browserId] == null)
+                return 0;
+
+            browsers[browserId].browser.ExecuteScriptAsync(js);
+
+            return 1;
+        }
+
+        [DllExport(CallingConvention.Cdecl)]
+        public static double browser_is_initialized(double browserIdDouble)
+        {
+            int browserId = (int)browserIdDouble; // this is so stupid, GML...
+            if (browserId < 0 || browserId >= browsers.Count || browsers[browserId] == null)
+                return 0;
+            
+            return browsers[browserId].browser.IsBrowserInitialized ? 1 : 0;
         }
     }
 }

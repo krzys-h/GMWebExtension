@@ -3,7 +3,7 @@
   <name>GMWebBrowser</name>
   <version>1.0.0</version>
   <packageID></packageID>
-  <ProductID>ACBD3CFF4E539AD869A0E8E3B4B022DD</ProductID>
+  <ProductID></ProductID>
   <date>26/09/18</date>
   <license>Free to use, also for commercial games.</license>
   <description></description>
@@ -157,6 +157,29 @@
           <args>
             <arg>2</arg>
             <arg>2</arg>
+            <arg>2</arg>
+          </args>
+        </function>
+        <function>
+          <name>browser_js</name>
+          <externalName>browser_js</externalName>
+          <kind>12</kind>
+          <help>browser_js(browserId, code)</help>
+          <returnType>2</returnType>
+          <argCount>2</argCount>
+          <args>
+            <arg>2</arg>
+            <arg>1</arg>
+          </args>
+        </function>
+        <function>
+          <name>browser_is_initialized</name>
+          <externalName>browser_is_initialized</externalName>
+          <kind>12</kind>
+          <help></help>
+          <returnType>2</returnType>
+          <argCount>1</argCount>
+          <args>
             <arg>2</arg>
           </args>
         </function>

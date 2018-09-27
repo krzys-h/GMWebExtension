@@ -14,6 +14,8 @@ browser_load(browser_id, url)
 browser_load_html(browser_id, html)
 browser_resize(browser_id, width, height)
 browser_draw(browser_id, x, y)
+browser_is_initialized(browser_id)
+browser_js(browser_id, js)
 
 // In the Social async event (this is what all extensions are supposed to use apparently and I hate it):
 var event_id = async_load[? "id"];
